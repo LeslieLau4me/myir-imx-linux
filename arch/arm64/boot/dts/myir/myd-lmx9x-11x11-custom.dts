@@ -1,0 +1,563 @@
+/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+/*
+ * Copyright 2022 NXP
+ */
+
+
+/dts-v1/;
+#include <dt-bindings/usb/pd.h>
+#include "imx93.dtsi"
+
+&ele_fw2 {
+	memory-region = <&ele_reserved>;
+};
+
+/ {
+	model = "IMX93-CUSTOM-BOARD";
+	compatible = "fsl,imx93-11x11-evk", "fsl,imx93";
+
+	chosen {
+		stdout-path = &lpuart1;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		linux,cma {
+			compatible = "shared-dma-pool";
+			reusable;
+			alloc-ranges = <0 0x80000000 0 0x40000000>;
+			size = <0 0x08000000>;
+			linux,cma-default;
+		};
+
+		ele_reserved: ele-reserved@a4120000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0xa4120000 0 0x100000>;
+			no-map;
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_keys>;
+		status = "okay";
+
+		/* 下按键 - GPIO4_IO15 */
+		key-down {
+			label = "down";
+			linux,code = <KEY_DOWN>;    /* KEY_DOWN 下方向键 */
+			gpios = <&gpio4 15 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+
+		key-cancel {
+			label = "cancel";
+			linux,code = <KEY_ESC>;     /* KEY_ESC 取消键 */
+			gpios = <&gpio4 16 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+
+		/* 上按键 - GPIO4_IO27 */
+		key-up {
+			label = "up";
+			linux,code = <KEY_UP>;    /* KEY_UP 上方向键 */
+			gpios = <&gpio4 27 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+
+		/* 左按键 - GPIO4_IO21 */
+		key-left {
+			label = "left";
+			linux,code = <KEY_LEFT>;    /* KEY_LEFT 左方向键 */
+			gpios = <&gpio4 21 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+
+		/* 确认按键 - GPIO4_IO02 */
+		key-enter {
+			label = "enter";
+			linux,code = <KEY_ENTER>;     /* KEY_ENTER 确认键 */
+			gpios = <&gpio4 2 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+
+		/* 右按键 - GPIO2_IO06 */
+		key-right {
+			label = "right";
+			linux,code = <KEY_RIGHT>;    /* KEY_RIGHT 右方向键 */
+			gpios = <&gpio2 6 GPIO_ACTIVE_LOW>;
+			debounce-interval = <20>;
+			wakeup-source;
+		};
+	};
+
+	/* 
+	PWM 蜂鸣器：4kHz 方波 
+	echo 1 > /sys/class/leds/beep/brightness  # 开
+	echo 0 > /sys/class/leds/beep/brightness  # 关
+	*/
+	pwm-beep {
+		compatible = "pwm-beeper";
+		pwms = <&tpm4 0 250000 0>;  // 周期 250000ns = 4kHz
+		status = "okay";
+	};
+
+	/* 
+	PWM 红外发射：38kHz 方波 
+	echo 255 > /sys/class/leds/ir-carrier/brightness  # 开38k
+	echo 0 > /sys/class/leds/ir-carrier/brightness    # 关
+	*/
+	pwm-ir-tx {
+		compatible = "pwm-ir-tx";
+		pwms = <&tpm3 0 26316 0>;   // 周期 26316ns = 38kHz
+		status = "okay";
+	};
+
+	/* 固定电源 */
+	reg_vdd_3v3: regulator-vdd {
+		compatible = "regulator-fixed";
+		regulator-name = "VDD_3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+	};
+
+	reg_vddio_1v8: regulator-vddo {
+		compatible = "regulator-fixed";
+		regulator-name = "VDDIO_1V8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		vin-supply = <&reg_vdd_3v3>;
+	};
+
+	reg_vref_1v8: regulator-adc-vref {
+		compatible = "regulator-fixed";
+		regulator-name = "vref_1v8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};
+
+/* 基础外设使能  */
+&lpuart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1>;
+	status = "okay";
+};
+
+/* 基础外设使能  */
+&lpuart2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart2>;
+	status = "okay";
+};
+
+/* 红外串口 */
+&lpuart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart3>;
+	rs485-rx-during-tx;
+	linux,rs485-enabled-at-boot-time;
+	status = "okay";
+};
+
+/* 蓝牙串口 */
+&lpuart7 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart7>;
+	status = "okay";
+};
+
+/* 计量模块串口 */
+&lpuart8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart8>;
+	status = "okay";
+};
+
+/* PLC 模块串口 */
+&lpuart6 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart6>;
+	status = "okay";
+};
+
+/* 协处理器串口 */
+&lpuart5 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart5>;
+	status = "disabled";
+
+	bluetooth {
+		compatible = "nxp,88w8987-bt";
+	};
+};
+
+&lpi2c1 {
+	clock-frequency = <400000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpi2c1>;
+	status = "okay";
+};
+
+&lpi2c2 {
+	clock-frequency = <400000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpi2c2>;
+	status = "okay";
+};
+
+/* USB OTG1 连接到 u盘接口，支持 OTG 功能 */
+&usbotg1 {
+	dr_mode = "otg";
+	usb-role-switch;
+	disable-over-current;
+	status = "okay";
+};
+
+/* 4G 模块专用 USB OTG2，固定为 Host 模式 */
+&usbotg2 {
+	dr_mode = "host";
+	disable-over-current;
+	status = "okay";
+};
+
+/*  SD/MMC/eMMC */
+&usdhc1 {
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc1>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+	bus-width = <8>;
+	non-removable;
+	status = "okay";
+};
+
+&usdhc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc2>;
+	cd-gpios = <&gpio3 0 GPIO_ACTIVE_LOW>;
+	bus-width = <4>;
+	status = "okay";
+	no-mmc;
+};
+
+/*  双网口  */
+&eqos {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_eqos>;
+	phy-mode = "rgmii-id";
+	phy-handle = <&ethphy1>;
+	status = "okay";
+
+	mdio {
+		compatible = "snps,dwmac-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ethphy1: ethernet-phy@4 { reg = <4>; };
+	};
+};
+
+&fec {
+	status = "disabled";
+};
+
+/*  PWM (蜂鸣器+红外)  */
+
+/* TPM3_CH3 连接到红外发射模块 */ 
+/* TPM4_CH3 连接到蜂鸣器 */ 
+&tpm3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_tpm3>;
+	status = "okay";
+};
+
+&tpm4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_tpm4>;
+	status = "okay";
+};
+
+/*  ADC1 */
+
+&adc1 {
+	vref-supply = <&reg_vref_1v8>;
+	status = "okay";
+};
+
+&wdog3      { status = "okay"; };
+
+
+&lcdif      { status = "disabled"; };
+&flexcan1   { status = "disabled"; };
+&flexcan2   { status = "disabled"; };
+&sai1       { status = "disabled"; };
+&sai3       { status = "disabled"; };
+&micfil     { status = "disabled"; };
+&cm33       { status = "disabled"; };
+&mu1        { status = "disabled"; };
+&mu2        { status = "disabled"; };
+&isi        { status = "disabled"; };
+&dphy_rx    { status = "disabled"; };
+&mipi_csi   { status = "disabled"; };
+&lpuart5    { status = "disabled"; };
+&lpuart6    { status = "disabled"; };
+&lpi2c3     { status = "disabled"; };
+&usdhc3     { status = "disabled"; };
+&xcvr       { status = "disabled"; };
+
+&iomuxc {
+	status = "okay";
+
+	pinctrl_uart1: uart1grp {
+		fsl,pins = <
+			MX93_PAD_UART1_RXD__LPUART1_RX			0x31e
+			MX93_PAD_UART1_TXD__LPUART1_TX			0x31e
+		>;
+	};
+
+	/* 485串口  */
+	pinctrl_uart2: uart2grp {
+		fsl,pins = <
+			MX93_PAD_UART2_RXD__LPUART2_RX			0x31e
+			MX93_PAD_UART2_TXD__LPUART2_TX			0x31e
+		>;
+	};
+
+	/* 红外串口 */
+	pinctrl_uart3: uart3grp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO14__LPUART3_TX             0x0000057E	
+			MX93_PAD_GPIO_IO15__LPUART3_RX             0x0000057E
+		>;
+	};
+
+
+	/* PLC 模块 */
+	pinctrl_uart6: uart6grp {
+		fsl,pins = <
+                MX93_PAD_GPIO_IO04__LPUART6_TX             0x0000057E
+                MX93_PAD_GPIO_IO05__LPUART6_RX             0x0000057E
+		>;
+	};
+
+	/* 协处理器 */
+	pinctrl_uart5: uart5grp {
+		fsl,pins = <
+			MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX		0x31e
+			MX93_PAD_DAP_TDI__LPUART5_RX			0x31e
+		>;
+	};
+
+    /* 蓝牙串口 */
+	pinctrl_uart7: uart7grp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO08__LPUART7_TX             0x0000057E
+			MX93_PAD_GPIO_IO09__LPUART7_RX             0x0000057E
+		>;
+	};
+
+	/* 计量模块 */
+	pinctrl_uart8: uart8grp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO12__LPUART8_TX             0x0000057E
+			MX93_PAD_GPIO_IO13__LPUART8_RX             0x0000057E
+		>;
+	};
+
+
+	/* I2C1 */
+	pinctrl_lpi2c1: lpi2c1grp {
+		fsl,pins = <
+			MX93_PAD_I2C1_SCL__LPI2C1_SCL		0x40000b9e
+			MX93_PAD_I2C1_SDA__LPI2C1_SDA		0x40000b9e
+		>;
+	};
+
+	/* I2C2 */
+	pinctrl_lpi2c2: lpi2c2grp {
+		fsl,pins = <
+			MX93_PAD_I2C2_SCL__LPI2C2_SCL		0x40000b9e
+			MX93_PAD_I2C2_SDA__LPI2C2_SDA		0x40000b9e
+		>;
+	};
+
+	/* 网口1 EQOS */
+	pinctrl_eqos: eqosgrp {
+		fsl,pins = <
+			MX93_PAD_ENET1_MDC__ENET_QOS_MDC		0x57e
+			MX93_PAD_ENET1_MDIO__ENET_QOS_MDIO		0x57e
+			MX93_PAD_ENET1_RD0__ENET_QOS_RGMII_RD0		0x57e
+			MX93_PAD_ENET1_RD1__ENET_QOS_RGMII_RD1		0x57e
+			MX93_PAD_ENET1_RD2__ENET_QOS_RGMII_RD2		0x57e
+			MX93_PAD_ENET1_RD3__ENET_QOS_RGMII_RD3		0x57e
+			MX93_PAD_ENET1_RXC__CCM_ENET_QOS_CLOCK_GENERATE_RX_CLK	0x58e
+			MX93_PAD_ENET1_RX_CTL__ENET_QOS_RGMII_RX_CTL	0x57e
+			MX93_PAD_ENET1_TD0__ENET_QOS_RGMII_TD0		0x57e
+			MX93_PAD_ENET1_TD1__ENET_QOS_RGMII_TD1		0x57e
+			MX93_PAD_ENET1_TD2__ENET_QOS_RGMII_TD2		0x57e
+			MX93_PAD_ENET1_TD3__ENET_QOS_RGMII_TD3		0x57e
+			MX93_PAD_ENET1_TXC__CCM_ENET_QOS_CLOCK_GENERATE_TX_CLK	0x58e
+			MX93_PAD_ENET1_TX_CTL__ENET_QOS_RGMII_TX_CTL	0x57e
+		>;
+	};
+
+	/* SDIO1 (eMMC) */
+	pinctrl_usdhc1: usdhc1grp {
+		fsl,pins = <
+			MX93_PAD_SD1_CLK__USDHC1_CLK		0x1582
+			MX93_PAD_SD1_CMD__USDHC1_CMD		0x40001382
+			MX93_PAD_SD1_DATA0__USDHC1_DATA0	0x40001382
+			MX93_PAD_SD1_DATA1__USDHC1_DATA1	0x40001382
+			MX93_PAD_SD1_DATA2__USDHC1_DATA2	0x40001382
+			MX93_PAD_SD1_DATA3__USDHC1_DATA3	0x40001382
+			MX93_PAD_SD1_DATA4__USDHC1_DATA4	0x40001382
+			MX93_PAD_SD1_DATA5__USDHC1_DATA5	0x40001382
+			MX93_PAD_SD1_DATA6__USDHC1_DATA6	0x40001382
+			MX93_PAD_SD1_DATA7__USDHC1_DATA7	0x40001382
+			MX93_PAD_SD1_STROBE__USDHC1_STROBE	0x1582
+		>;
+	};
+
+	pinctrl_usdhc1_100mhz: usdhc1-100mhzgrp {
+		fsl,pins = <
+			MX93_PAD_SD1_CLK__USDHC1_CLK		0x158e
+			MX93_PAD_SD1_CMD__USDHC1_CMD		0x4000138e
+			MX93_PAD_SD1_DATA0__USDHC1_DATA0	0x4000138e
+			MX93_PAD_SD1_DATA1__USDHC1_DATA1	0x4000138e
+			MX93_PAD_SD1_DATA2__USDHC1_DATA2	0x4000138e
+			MX93_PAD_SD1_DATA3__USDHC1_DATA3	0x4000138e
+			MX93_PAD_SD1_DATA4__USDHC1_DATA4	0x4000138e
+			MX93_PAD_SD1_DATA5__USDHC1_DATA5	0x4000138e
+			MX93_PAD_SD1_DATA6__USDHC1_DATA6	0x4000138e
+			MX93_PAD_SD1_DATA7__USDHC1_DATA7	0x4000138e
+			MX93_PAD_SD1_STROBE__USDHC1_STROBE	0x158e
+		>;
+	};
+
+	pinctrl_usdhc1_200mhz: usdhc1-200mhzgrp {
+		fsl,pins = <
+			MX93_PAD_SD1_CLK__USDHC1_CLK		0x15fe
+			MX93_PAD_SD1_CMD__USDHC1_CMD		0x400013fe
+			MX93_PAD_SD1_DATA0__USDHC1_DATA0	0x400013fe
+			MX93_PAD_SD1_DATA1__USDHC1_DATA1	0x400013fe
+			MX93_PAD_SD1_DATA2__USDHC1_DATA2	0x400013fe
+			MX93_PAD_SD1_DATA3__USDHC1_DATA3	0x400013fe
+			MX93_PAD_SD1_DATA4__USDHC1_DATA4	0x400013fe
+			MX93_PAD_SD1_DATA5__USDHC1_DATA5	0x400013fe
+			MX93_PAD_SD1_DATA6__USDHC1_DATA6	0x400013fe
+			MX93_PAD_SD1_DATA7__USDHC1_DATA7	0x400013fe
+			MX93_PAD_SD1_STROBE__USDHC1_STROBE	0x15fe
+		>;
+	};
+
+	/* SDIO2 (WiFi/SD卡) */
+	pinctrl_usdhc2: usdhc2grp {
+		fsl,pins = <
+			MX93_PAD_SD2_CLK__USDHC2_CLK		0x1582
+			MX93_PAD_SD2_CMD__USDHC2_CMD		0x40001382
+			MX93_PAD_SD2_DATA0__USDHC2_DATA0	0x40001382
+			MX93_PAD_SD2_DATA1__USDHC2_DATA1	0x40001382
+			MX93_PAD_SD2_DATA2__USDHC2_DATA2	0x40001382
+			MX93_PAD_SD2_DATA3__USDHC2_DATA3	0x40001382
+		>;
+	};
+
+    /* 红外 */
+	pinctrl_tpm3: tpm3grp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO24__TPM3_CH3		0x10b0
+		>;
+	};
+
+    /* 蜂鸣器 */
+	pinctrl_tpm4: tpm4grp {
+		fsl,pins = <
+            MX93_PAD_GPIO_IO25__TPM4_CH3		0x10b0
+		>;
+	};
+
+	pinctrl_all_gpio: allgpiogrp {
+		fsl,pins = <
+			/* LCD/LCDIF 全部 -> GPIO */
+			MX93_PAD_ENET2_RD0__GPIO4_IO24		0x10b0
+			MX93_PAD_ENET2_RD1__GPIO4_IO25		0x10b0
+			MX93_PAD_ENET2_RX_CTL__GPIO4_IO22	0x10b0
+			MX93_PAD_ENET2_TD3__GPIO4_IO16		0x10b0
+			MX93_PAD_ENET2_TD2__GPIO4_IO17		0x10b0
+			MX93_PAD_ENET2_TX_CTL__GPIO4_IO20	0x10b0
+			MX93_PAD_ENET2_TD1__GPIO4_IO18		0x10b0
+			MX93_PAD_ENET2_RXC__GPIO4_IO23		0x10b0
+			MX93_PAD_SD3_CLK__GPIO3_IO20		0x10b0
+			MX93_PAD_SD3_DATA1__GPIO3_IO23		0x10b0
+			MX93_PAD_SD3_DATA2__GPIO3_IO24		0x10b0
+			MX93_PAD_SD3_CMD__GPIO3_IO21		0x10b0
+			MX93_PAD_SD3_DATA0__GPIO3_IO22		0x10b0
+
+			/* 音频/摄像头/CAN/PDM 全部 -> GPIO */
+			MX93_PAD_SAI1_TXC__GPIO1_IO12		0x10b0
+			MX93_PAD_SAI1_TXFS__GPIO1_IO11		0x10b0
+			MX93_PAD_SAI1_TXD0__GPIO1_IO13		0x10b0
+			MX93_PAD_SAI1_RXD0__GPIO1_IO14		0x10b0
+			MX93_PAD_PDM_CLK__GPIO1_IO08		0x10b0
+			MX93_PAD_PDM_BIT_STREAM0__GPIO1_IO09	0x10b0
+			MX93_PAD_PDM_BIT_STREAM1__GPIO1_IO10	0x10b0
+			MX93_PAD_CCM_CLKO2__GPIO3_IO27		0x10b0
+			MX93_PAD_CCM_CLKO3__GPIO4_IO28		0x10b0
+
+			/* 通用闲置引脚 -> GPIO */
+			MX93_PAD_GPIO_IO00__GPIO2_IO00		0x10b0
+			MX93_PAD_GPIO_IO01__GPIO2_IO01		0x10b0
+			MX93_PAD_GPIO_IO02__GPIO2_IO02		0x10b0
+			MX93_PAD_GPIO_IO03__GPIO2_IO03		0x10b0
+			MX93_PAD_GPIO_IO08__GPIO2_IO08		0x10b0
+			MX93_PAD_GPIO_IO09__GPIO2_IO09		0x10b0
+			MX93_PAD_GPIO_IO10__GPIO2_IO10		0x10b0
+			MX93_PAD_GPIO_IO11__GPIO2_IO11		0x10b0
+			MX93_PAD_GPIO_IO12__GPIO2_IO12		0x10b0
+			MX93_PAD_GPIO_IO13__GPIO2_IO13		0x10b0
+			MX93_PAD_GPIO_IO16__GPIO2_IO16		0x10b0
+			MX93_PAD_GPIO_IO17__GPIO2_IO17		0x10b0
+			MX93_PAD_GPIO_IO18__GPIO2_IO18		0x10b0
+			MX93_PAD_GPIO_IO19__GPIO2_IO19		0x10b0
+			MX93_PAD_GPIO_IO20__GPIO2_IO20		0x10b0
+			MX93_PAD_GPIO_IO21__GPIO2_IO21		0x10b0
+			MX93_PAD_GPIO_IO22__GPIO2_IO22		0x10b0
+			MX93_PAD_GPIO_IO23__GPIO2_IO23		0x10b0
+			MX93_PAD_GPIO_IO24__GPIO2_IO24		0x10b0
+			MX93_PAD_GPIO_IO25__GPIO2_IO25		0x10b0
+			MX93_PAD_GPIO_IO26__GPIO2_IO26		0x10b0
+			MX93_PAD_GPIO_IO27__GPIO2_IO27		0x10b0
+			MX93_PAD_GPIO_IO28__GPIO2_IO28		0x10b0
+			MX93_PAD_GPIO_IO29__GPIO2_IO29		0x10b0
+		>;
+	};
+
+	pinctrl_gpio_keys: gpio-keys-grp {
+	fsl,pins = <
+		/* GPIO4_15 -> 下按键 */
+		MX93_PAD_ENET2_MDIO__GPIO4_IO15		0x10b
+		/* GPIO4_27 -> 上按键 */
+		MX93_PAD_ENET2_RD3__GPIO4_IO27		0x10b
+		/* GPIO4_21 -> 左按键 */
+		MX93_PAD_ENET2_TXC__GPIO4_IO21		0x10b
+		/* GPIO4_2  -> 确认按键 */
+		MX93_PAD_ENET1_TD3__GPIO4_IO02			0x10b
+		/* GPIO2_6  -> 右按键 */
+		MX93_PAD_GPIO_IO06__GPIO2_IO06				0x10b
+		/* GPIO4_16 -> 取消按键 */
+		MX93_PAD_ENET2_TD3__GPIO4_IO16 			0x10b	
+	>;	
+};
+};
+
+&epxp { status = "okay"; };
