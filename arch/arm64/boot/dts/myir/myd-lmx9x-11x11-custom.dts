@@ -125,7 +125,7 @@
 	drv_leds {
 		compatible = "leds_drv";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_leds_drv>;
+		pinctrl-0 = <&pinctrl_led>;
 		drv_leds-names = "drv_leds";
 		leds-gpios = <
 			&gpio4 7 GPIO_ACTIVE_HIGH  /* 运行指示灯 复用为 GPIO4_IO07 */

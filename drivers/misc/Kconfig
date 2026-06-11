@@ -610,6 +610,13 @@ config MARVELL_CN10K_DPI
 	  To compile this driver as a module, choose M here: the module
 	  will be called mrvl_cn10k_dpi.
 
+config LCD_MODULE
+    tristate "LCD Module Support"
+	default y
+    help
+      This option enables the LCD module. If you want to use the LCD
+      module, you should say Y or M here.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
