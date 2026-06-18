@@ -303,7 +303,13 @@
 		compatible = "snps,dwmac-mdio";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		ethphy1: ethernet-phy@4 { reg = <4>; };
+		clock-frequency = <5000000>;
+
+		ethphy1: ethernet-phy@4 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <4>;
+			eee-broken-1000t;
+		};
 	};
 };
 
