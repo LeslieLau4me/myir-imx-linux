@@ -241,6 +241,12 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpi2c1>;
 	status = "okay";
+
+	rtc: rtc@32 {
+		compatible = "epson,rx8025t";
+		reg = <0x32>;
+		status = "okay";
+	};
 };
 
 &lpi2c2 {
