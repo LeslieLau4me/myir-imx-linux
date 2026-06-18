@@ -145,7 +145,7 @@
 
 		led-beep {
 			label = "beep";
-			pwms = <&tpm4 0 250000 0>;  // 周期 250000ns = 4kHz
+			pwms = <&tpm4 3 250000 0>;  // 通道3, 周期 250000ns = 4kHz
 			max-brightness = <255>;
 		};
 	};
@@ -161,7 +161,7 @@
 
 		led-ir {
 			label = "ir-carrier";
-			pwms = <&tpm3 0 26316 0>;   // 周期 26316ns = 38kHz
+			pwms = <&tpm3 3 26316 0>;   // 通道3, 周期 26316ns = 38kHz
 			max-brightness = <255>;
 		};
 	};
@@ -575,8 +575,7 @@
 			MX93_PAD_GPIO_IO21__GPIO2_IO21		0x10b0 /*掉电检测IO*/	
 			MX93_PAD_GPIO_IO22__GPIO2_IO22		0x10b0 /*开盖检测IO*/	
 			MX93_PAD_GPIO_IO23__GPIO2_IO23		0x10b0 /*外置电池充电使能IO*/	
-			MX93_PAD_GPIO_IO24__GPIO2_IO24		0x10b0
-			MX93_PAD_GPIO_IO25__GPIO2_IO25		0x10b0
+			/* GPIO_IO24 用于 TPM3_CH3 红外发射，GPIO_IO25 用于 TPM4_CH3 蜂鸣器，不可用于 GPIO */
 			MX93_PAD_GPIO_IO26__GPIO2_IO26		0x10b0 /*校表485切换IO*/	
 			MX93_PAD_GPIO_IO27__GPIO2_IO27		0x10b0 /*WIFI WLAN EN*/	
 			MX93_PAD_GPIO_IO28__GPIO2_IO28		0x10b0 /*继电器OFF*/	
