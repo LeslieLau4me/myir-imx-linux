@@ -112,7 +112,7 @@
 			&gpio3 22 GPIO_ACTIVE_HIGH  /* LCD-RD   C48 SD3_DATA0 */
 			&gpio3 23 GPIO_ACTIVE_HIGH  /* LCD-CS   C44 SD3_DATA1 */
 			&gpio4 23 GPIO_ACTIVE_HIGH  /* LCD-D7   C46 SD3_DATA3 */
-			&gpio4 27 GPIO_ACTIVE_HIGH  /* LCD-D6   B37 CLK001 */
+			&gpio4 17 GPIO_ACTIVE_HIGH  /* LCD-D6   B37 CLK001 */
 			&gpio4 20 GPIO_ACTIVE_HIGH  /* LCD-D5   B38 CLK002 */
 			&gpio4 18 GPIO_ACTIVE_HIGH  /* LCD-D4   B16 ENET2_TD1 */
 			&gpio4 19 GPIO_ACTIVE_HIGH  /* LCD-D3   B17 ENET2_TD0 */
@@ -136,24 +136,34 @@
 
 	/* 
 	PWM 蜂鸣器：4kHz 方波 
-	echo 1 > /sys/class/leds/beep/brightness  # 开
-	echo 0 > /sys/class/leds/beep/brightness  # 关
+	echo 127 > /sys/class/leds/beep/brightness  # 开（50%占空比）
+	echo 0 > /sys/class/leds/beep/brightness    # 关
 	*/
 	pwm-beep {
-		compatible = "pwm-beeper";
-		pwms = <&tpm4 0 250000 0>;  // 周期 250000ns = 4kHz
+		compatible = "pwm-leds";
 		status = "okay";
+
+		led-beep {
+			label = "beep";
+			pwms = <&tpm4 0 250000 0>;  // 周期 250000ns = 4kHz
+			max-brightness = <255>;
+		};
 	};
 
 	/* 
 	PWM 红外发射：38kHz 方波 
-	echo 255 > /sys/class/leds/ir-carrier/brightness  # 开38k
+	echo 127 > /sys/class/leds/ir-carrier/brightness  # 开38k（50%占空比）
 	echo 0 > /sys/class/leds/ir-carrier/brightness    # 关
 	*/
 	pwm-ir-tx {
-		compatible = "pwm-ir-tx";
-		pwms = <&tpm3 0 26316 0>;   // 周期 26316ns = 38kHz
+		compatible = "pwm-leds";
 		status = "okay";
+
+		led-ir {
+			label = "ir-carrier";
+			pwms = <&tpm3 0 26316 0>;   // 周期 26316ns = 38kHz
+			max-brightness = <255>;
+		};
 	};
 
 	/* 固定电源 */
@@ -308,6 +318,7 @@
 		ethphy1: ethernet-phy@4 {
 			compatible = "ethernet-phy-ieee802.3-c22";
 			reg = <4>;
+			reset-gpios = <&gpio3 26 GPIO_ACTIVE_LOW>;
 			eee-broken-1000t;
 		};
 	};
@@ -622,7 +633,7 @@
 			MX93_PAD_SD3_DATA1__GPIO3_IO23 0x10b0 		/* LCD-CS   C44 SD3_DATA1 */
 
 			MX93_PAD_ENET2_RXC__GPIO4_IO23 0x10b0 		/* LCD-D7   C46 SD3_DATA3 */
-			MX93_PAD_ENET2_RD3__GPIO4_IO27 0x10b0 		/* LCD-D6   B37 CLK001 */
+			MX93_PAD_ENET2_TD2__GPIO4_IO17 0x10b0 		/* LCD-D6   B37 CLK001 */
 			MX93_PAD_ENET2_TX_CTL__GPIO4_IO20 0x10b0 	/* LCD-D5   B38 CLK002 */
 			MX93_PAD_ENET2_TD1__GPIO4_IO18 0x10b0		/* LCD-D4   B16 ENET2_TD1 */
 			MX93_PAD_ENET2_TD0__GPIO4_IO19 0x10b0		/* LCD-D3   B17 ENET2_TD0 */
