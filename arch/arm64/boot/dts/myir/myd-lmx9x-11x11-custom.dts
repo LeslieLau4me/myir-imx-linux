@@ -266,11 +266,15 @@
 	status = "okay";
 };
 
-/* USB OTG1 连接到 u盘接口，支持 OTG 功能 */
+/* USB OTG1 连接到 u盘接口，固定为 Host 模式 */
 &usbotg1 {
 	dr_mode = "otg";
-	usb-role-switch;
+	hnp-disable;
+	srp-disable;
+	adp-disable;
 	disable-over-current;
+	samsung,picophy-pre-emp-curr-control = <3>;
+	samsung,picophy-dc-vol-level-adjust = <7>;
 	status = "okay";
 };
 
@@ -304,21 +308,21 @@
 /*  双网口  */
 &eqos {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_eqos>;
-	phy-mode = "rgmii-id";
+	pinctrl-0 = <&pinctrl_eqos>,<&pinctrl_reset_eqos>;
+	phy-mode = "rmii";
 	phy-handle = <&ethphy1>;
+	phy-reset-gpios = <&gpio3 26 GPIO_ACTIVE_LOW>;
 	status = "okay";
-
+	phy-reset-duration = <200>;
 	mdio {
 		compatible = "snps,dwmac-mdio";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		clock-frequency = <5000000>;
 
-		ethphy1: ethernet-phy@4 {
+		ethphy1: ethernet-phy@1 {
 			compatible = "ethernet-phy-ieee802.3-c22";
-			reg = <4>;
-			reset-gpios = <&gpio3 26 GPIO_ACTIVE_LOW>;
+			reg = <1>;
 			eee-broken-1000t;
 		};
 	};
@@ -448,25 +452,29 @@
 		>;
 	};
 
-	/* 网口1 EQOS */
+		/* 网口1 EQOS (RMII: REF_CLK 由 SoC 输出，参照 i.MX6ULL ENET1_TX_CLK__ENET1_REF_CLK1) */
 	pinctrl_eqos: eqosgrp {
 		fsl,pins = <
 			MX93_PAD_ENET1_MDC__ENET_QOS_MDC		0x57e
 			MX93_PAD_ENET1_MDIO__ENET_QOS_MDIO		0x57e
 			MX93_PAD_ENET1_RD0__ENET_QOS_RGMII_RD0		0x57e
 			MX93_PAD_ENET1_RD1__ENET_QOS_RGMII_RD1		0x57e
-			MX93_PAD_ENET1_RD2__ENET_QOS_RGMII_RD2		0x57e
-			MX93_PAD_ENET1_RD3__ENET_QOS_RGMII_RD3		0x57e
-			MX93_PAD_ENET1_RXC__CCM_ENET_QOS_CLOCK_GENERATE_RX_CLK	0x58e
+			MX93_PAD_ENET1_RXC__ENET_QOS_RX_ER 			0x5fe
 			MX93_PAD_ENET1_RX_CTL__ENET_QOS_RGMII_RX_CTL	0x57e
 			MX93_PAD_ENET1_TD0__ENET_QOS_RGMII_TD0		0x57e
 			MX93_PAD_ENET1_TD1__ENET_QOS_RGMII_TD1		0x57e
-			MX93_PAD_ENET1_TD2__ENET_QOS_RGMII_TD2		0x57e
-			// MX93_PAD_ENET1_TD3__ENET_QOS_RGMII_TD3		0x57e
-			MX93_PAD_ENET1_TXC__CCM_ENET_QOS_CLOCK_GENERATE_TX_CLK	0x58e
 			MX93_PAD_ENET1_TX_CTL__ENET_QOS_RGMII_TX_CTL	0x57e
+			MX93_PAD_ENET1_TD2__CCM_ENET_QOS_CLOCK_GENERATE_REF_CLK	0x40000b16  /* 50MHz REF_CLK (SION, 参照 i.MX6ULL 0x4001b031) */
 		>;
 	};
+
+	pinctrl_reset_eqos: reset_eqosgrp {
+		fsl,pins = <
+			MX93_PAD_CCM_CLKO1__GPIO3_IO26		0x40b0  /* ENET1 PHY 复位 */
+		>;
+	};
+
+
 
 	/* SDIO1 (eMMC) */
 	pinctrl_usdhc1: usdhc1grp {
@@ -589,11 +597,10 @@
 			MX93_PAD_SAI1_RXD0__GPIO1_IO14		0x10b0 /* 4G模块复位IO 复用为 GPIO1_IO14 */
 			MX93_PAD_ENET2_MDC__GPIO4_IO14		0x10b0 /* PLC模块电源控制IO 复用为 GPIO4_IO14 */
 			MX93_PAD_ENET2_RD2__GPIO4_IO26		0x10b0 /* 开关量输入3 复用为 GPIO4_IO26 */
-			MX93_PAD_ENET1_RD2__GPIO4_IO12		0x10b0 /* WIFI电源3.3V检测 复用为 GPIO4_IO12 */
 			MX93_PAD_CCM_CLKO3__GPIO4_IO28		0x10b0 /* 4000&5000硬件版本IO检测复用为 GPIO4_IO28 */
 
 			MX93_PAD_SD3_DATA3__GPIO3_IO25		0x10b0 /* 非保持RELAY_1控制IO 复用为 GPIO3_IO25 */
-			MX93_PAD_CCM_CLKO2__GPIO3_IO27		0x10b0 /* 锂电池电压检测控制IO 复用为 GPIO3_IO26 */
+			MX93_PAD_CCM_CLKO2__GPIO3_IO27		0x10b0 /* 锂电池电压检测控制IO 复用为 GPIO3_IO27 */
 
 		>;
 	};
