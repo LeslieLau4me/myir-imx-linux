@@ -166,6 +166,37 @@
 		};
 	};
 
+	/* WiFi 电源使能 (GPIO1_IO12) - regulator 上电即拉高，早于 MMC 扫描 */
+	reg_wifi: regulator-wifi-pwr {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_wifi_pwr>;
+		regulator-name = "WIFI_PWR_EN";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		off-on-delay-us = <12000>;
+		// regulator-boot-on;
+		// regulator-always-on;
+	};
+
+	/* WiFi WLAN 使能 (GPIO2_IO27) - CHIP_EN / WLAN_EN */
+	reg_wifi_wlan: regulator-wifi-wlan {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_wifi_wlan>;
+		regulator-name = "WIFI_WLAN_EN";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio2 27 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		startup-delay-us = <20000>;
+		regulator-boot-on;
+		regulator-always-on;
+		vin-supply = <&reg_wifi>;
+	};
+
 	/* 固定电源 */
 	reg_vdd_3v3: regulator-vdd {
 		compatible = "regulator-fixed";
@@ -299,10 +330,12 @@
 &usdhc2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc2>;
-	cd-gpios = <&gpio3 0 GPIO_ACTIVE_LOW>;
 	bus-width = <4>;
+	non-removable;
+	vmmc-supply = <&reg_wifi>;
+	keep-power-in-suspend;
+	wakeup-source;
 	status = "okay";
-	no-mmc;
 };
 
 /*  双网口  */
@@ -532,6 +565,20 @@
 		>;
 	};
 
+	/* WiFi 电源 pinmux (GPIO1_IO12) */
+	pinctrl_wifi_pwr: wifipwrgrp {
+		fsl,pins = <
+			MX93_PAD_SAI1_TXC__GPIO1_IO12		0x40010b0
+		>;
+	};
+
+	/* WiFi WLAN EN pinmux (GPIO2_IO27) */
+	pinctrl_wifi_wlan: wifiwlangrp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO27__GPIO2_IO27		0x40010b0
+		>;
+	};
+
 	/* SDIO2 (WiFi/SD卡) */
 	pinctrl_usdhc2: usdhc2grp {
 		fsl,pins = <
@@ -561,7 +608,6 @@
 	pinctrl_all_gpio: allgpiogrp {
 		fsl,pins = <
 			/* 音频/摄像头/CAN/PDM 全部 -> GPIO */
-			MX93_PAD_SAI1_TXC__GPIO1_IO12		0x10b0 /* WIFI电源开关控制IO */
 			MX93_PAD_SAI1_TXFS__GPIO1_IO11		0x10b0 /* 开模块盖检测 */
 			MX93_PAD_SAI1_TXD0__GPIO1_IO13		0x10b0 /* PLC模块复位IO */
 			MX93_PAD_SAI1_RXD0__GPIO1_IO14		0x10b0 /* 4G模块复位IO */
@@ -592,7 +638,6 @@
 			MX93_PAD_GPIO_IO23__GPIO2_IO23		0x10b0 /*外置电池充电使能IO*/	
 			/* GPIO_IO24 用于 TPM3_CH3 红外发射，GPIO_IO25 用于 TPM4_CH3 蜂鸣器，不可用于 GPIO */
 			MX93_PAD_GPIO_IO26__GPIO2_IO26		0x10b0 /*校表485切换IO*/	
-			MX93_PAD_GPIO_IO27__GPIO2_IO27		0x10b0 /*WIFI WLAN EN*/	
 			MX93_PAD_GPIO_IO28__GPIO2_IO28		0x10b0 /*继电器OFF*/	
 			MX93_PAD_GPIO_IO29__GPIO2_IO29		0x10b0 /*继电器ON*/	
 			MX93_PAD_ENET2_MDC__GPIO4_IO14		0x10b0 /* PLC模块电源控制IO 复用为 GPIO4_IO14 */
