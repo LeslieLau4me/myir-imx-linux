@@ -74,3 +74,4 @@ obj-$(CONFIG_MARVELL_CN10K_DPI)	+= mrvl_cn10k_dpi.o
 obj-y				+= keba/
 
 obj-$(CONFIG_LCD_MODULE)       += user-lcd.o
+obj-$(CONFIG_LED_MODULE)       += user-led.o

@@ -617,6 +617,13 @@ config LCD_MODULE
       This option enables the LCD module. If you want to use the LCD
       module, you should say Y or M here.
 
+config LED_MODULE
+    tristate "LED Module Support"
+	default y
+    help
+      This option enables the USER LED module. If you want to use the LED
+      module, you should say Y or M here.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
