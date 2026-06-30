@@ -263,19 +263,6 @@ static int leds_drv_probe(struct platform_device *pdev)
 	dev = &pdev->dev;
 	dev_node = dev->of_node;
 
-	// 修改：简化设备树节点查找逻辑
-	dev_node = of_find_compatible_node(NULL, NULL, "fsl,imx6ul-gpio");
-	if (!dev_node) {
-		printk("get gpio device node error!\n");
-		return -EINVAL;
-	}
-
-	dev_node = of_find_compatible_node(dev_node, NULL, "leds_drv");
-	if (!dev_node) {
-		printk("failure to find leds device node!\n");
-		return -EINVAL;
-	}
-
 	name = of_get_property(dev_node, "drv_leds-names", NULL) ?:
 								   dev_node->name;
 	if (name == NULL)
