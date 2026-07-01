@@ -167,6 +167,7 @@
 	};
 
 	/* WiFi 电源使能 (GPIO1_IO12) - regulator 上电即拉高，早于 MMC 扫描 */
+	/* WiFi 主电源: WIFI_PWR_EN */
 	reg_wifi: regulator-wifi-pwr {
 		compatible = "regulator-fixed";
 		pinctrl-names = "default";
@@ -176,24 +177,25 @@
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-		regulator-boot-on;
-		regulator-always-on;
-	};
 
-	/* WiFi WLAN 使能 (GPIO2_IO27) - CHIP_EN / WLAN_EN */
-	reg_wifi_wlan: regulator-wifi-wlan {
-		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_wifi_wlan>;
-		regulator-name = "WIFI_WLAN_EN";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio2 27 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
+		/*
+		* 上电后等待电源稳定
+		* 期间 mmc-pwrseq 还不会释放 WLAN_EN
+		*/
 		startup-delay-us = <100000>;
 		regulator-boot-on;
+
+		/*
+		* 推荐保留
+		* 避免 suspend/resume 时 WiFi 掉电
+		*/
 		regulator-always-on;
-		vin-supply = <&reg_wifi>;
+	};
+	/* WiFi WLAN 使能 (GPIO2_IO27) - CHIP_EN / WLAN_EN */
+	wifi_pwrseq: wifi-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&gpio2 27 GPIO_ACTIVE_LOW>;
+		post-power-on-delay-ms = <100>;
 	};
 
 	/* 固定电源 */
@@ -328,20 +330,27 @@
 
 &usdhc2 {
     pinctrl-names = "default", "state_100mhz", "state_200mhz";
-    pinctrl-0 = <&pinctrl_usdhc2>;              /* 去掉 pinctrl_usdhc2_gpio */
+
+    pinctrl-0 = <&pinctrl_usdhc2>;
     pinctrl-1 = <&pinctrl_usdhc2_100mhz>;
     pinctrl-2 = <&pinctrl_usdhc2_200mhz>;
-    non-removable;                               /* 替代 cd-gpios */
+    non-removable;
     bus-width = <4>;
-    max-frequency = <50000000>;                  /* 50 MHz，稳定优先 */
-    keep-power-in-suspend;                       /* 休眠保持供电，支持 WoWLAN */
-	vmmc-supply = <&reg_wifi>;
-    wakeup-source;                               /* 允许模块唤醒主机 */
-    status = "okay";
     no-mmc;
     no-sd;
+	max-frequency = <25000000>;  
+    keep-power-in-suspend;
+    wakeup-source;
+    /*
+     * WiFi 主电源
+     */
+    vmmc-supply = <&reg_wifi>;
+    /*
+     * WiFi 时序控制
+     */
+    mmc-pwrseq = <&wifi_pwrseq>;
+    status = "okay";
 };
-
 
 /*  双网口  */
 &eqos {
