@@ -271,11 +271,7 @@
 &lpuart5 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart5>;
-	status = "disabled";
-
-	bluetooth {
-		compatible = "nxp,88w8987-bt";
-	};
+	status = "okay";
 };
 
 &lpi2c1 {
@@ -424,8 +420,6 @@
 &isi        { status = "disabled"; };
 &dphy_rx    { status = "disabled"; };
 &mipi_csi   { status = "disabled"; };
-&lpuart5    { status = "disabled"; };
-&lpuart6    { status = "disabled"; };
 &lpi2c3     { status = "disabled"; };
 &usdhc3     { status = "disabled"; };
 &xcvr       { status = "disabled"; };
@@ -468,8 +462,8 @@
 	/* 协处理器 */
 	pinctrl_uart5: uart5grp {
 		fsl,pins = <
-			MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX		0x31e
-			MX93_PAD_DAP_TDI__LPUART5_RX			0x31e
+			MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX		0x0000057E
+			MX93_PAD_DAP_TDI__LPUART5_RX			0x0000057E
 		>;
 	};
 
