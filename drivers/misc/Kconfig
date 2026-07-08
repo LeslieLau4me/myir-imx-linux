@@ -624,6 +624,12 @@ config LED_MODULE
       This option enables the USER LED module. If you want to use the LED
       module, you should say Y or M here.
 
+config BAT_CTRL_MODULE
+    tristate "BAT Ctrl Module Support"
+	default y
+    help
+      This option enables the backup bat ctrl module.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"

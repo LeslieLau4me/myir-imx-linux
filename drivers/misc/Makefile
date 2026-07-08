@@ -75,3 +75,4 @@ obj-y				+= keba/
 
 obj-$(CONFIG_LCD_MODULE)       += user-lcd.o
 obj-$(CONFIG_LED_MODULE)       += user-led.o
+obj-$(CONFIG_BAT_CTRL_MODULE)      += user-bat-ctrl.o
