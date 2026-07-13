@@ -462,24 +462,26 @@
 	/* PLC 模块 */
 	pinctrl_uart6: uart6grp {
 		fsl,pins = <
-                MX93_PAD_GPIO_IO04__LPUART6_TX             0x0000057E
-                MX93_PAD_GPIO_IO05__LPUART6_RX             0x0000057E
+			MX93_PAD_GPIO_IO04__LPUART6_TX             0x0000057E
+			MX93_PAD_GPIO_IO05__LPUART6_RX             0x0000057E
 		>;
 	};
 
 	/* 协处理器 */
 	pinctrl_uart5: uart5grp {
 		fsl,pins = <
-			MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX		0x0000057E
-			MX93_PAD_DAP_TDI__LPUART5_RX			0x0000057E
+			MX93_PAD_GPIO_IO00__LPUART5_TX  0x0000057E
+			MX93_PAD_GPIO_IO01__LPUART5_RX  0x0000057E
 		>;
 	};
 
     /* 蓝牙串口 */
 	pinctrl_uart7: uart7grp {
 		fsl,pins = <
-			MX93_PAD_GPIO_IO08__LPUART7_TX             0x0000057E
-			MX93_PAD_GPIO_IO09__LPUART7_RX             0x0000057E
+			MX93_PAD_GPIO_IO09__LPUART7_RX			0x31e /* UART_A_RX */
+			MX93_PAD_GPIO_IO08__LPUART7_TX			0x31e /* UART_A_TX */
+			MX93_PAD_GPIO_IO11__LPUART7_RTS_B		0x31e /* UART_A_CTS */
+			MX93_PAD_GPIO_IO10__LPUART7_CTS_B		0x31e /* UART_A_RTS */
 		>;
 	};
 
