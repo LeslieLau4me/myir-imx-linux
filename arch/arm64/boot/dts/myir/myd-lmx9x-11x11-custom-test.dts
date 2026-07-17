@@ -142,13 +142,6 @@
 		status = "okay";
 	};
 
-	drv_allgpio {
-		compatible = "leds_drv";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_all_gpio>;
-		status = "okay";
-	};
-
 	/* 
 	PWM 蜂鸣器：4kHz 方波 
 	echo 127 > /sys/class/leds/beep/brightness  # 开（50%占空比）
@@ -445,6 +438,20 @@
 	pinctrl-0 = <&pinctrl_gpio1>;
 };
 
+&gpio2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpio2>;
+};
+
+&gpio3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpio3>;
+};
+
+&gpio4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpio4>;
+};
 
 &iomuxc {
 	status = "okay";
@@ -651,66 +658,74 @@
     /* 红外 */
 	pinctrl_tpm3: tpm3grp {
 		fsl,pins = <
-			MX93_PAD_GPIO_IO24__TPM3_CH3		0x10b0
+			MX93_PAD_GPIO_IO24__TPM3_CH3		0x31e
 		>;
 	};
 
     /* 蜂鸣器 */
 	pinctrl_tpm4: tpm4grp {
 		fsl,pins = <
-            MX93_PAD_GPIO_IO25__TPM4_CH3		0x10b0
+            MX93_PAD_GPIO_IO25__TPM4_CH3		0x31e
 		>;
 	};
+
+	pinctrl_gpio3: gpio3grp {
+		fsl,pins = <
+			MX93_PAD_CCM_CLKO2__GPIO3_IO27  0x31e /* 锂电池电压检测控制IO */
+			MX93_PAD_SD2_CD_B__GPIO3_IO00		0x31e /* BT_EN 蓝牙使能脚 */
+			MX93_PAD_SD3_DATA3__GPIO3_IO25		0x31e /* 非保持RELAY_1控制IO 复用为 GPIO3_IO25 */
+		>;
+	};
+
 	pinctrl_gpio1: gpio1grp {
 		fsl,pins = <
-			MX93_PAD_SAI1_TXFS__GPIO1_IO11		0x51e /* 开模块盖检测 */
+			/* 音频/摄像头/CAN/PDM 全部 -> GPIO */
+			MX93_PAD_SAI1_TXD0__GPIO1_IO13		0x31e /* PLC模块复位IO */
+			MX93_PAD_SAI1_RXD0__GPIO1_IO14		0x31e /* 4G模块复位IO */
+			MX93_PAD_PDM_CLK__GPIO1_IO08		0x31e /* 4G模块 power key */
+			MX93_PAD_PDM_BIT_STREAM0__GPIO1_IO09	0x31e /* 4G USB 电源控制IO */
+			MX93_PAD_SAI1_TXFS__GPIO1_IO11		0x31e /* 开模块盖检测 */
 		>;
 	};
-	pinctrl_all_gpio: allgpiogrp {
+
+	pinctrl_gpio2: gpio2grp {
 		fsl,pins = <
-			/* 音频/摄像头/CAN/PDM 全部 -> GPIO */
-			// MX93_PAD_SAI1_TXFS__GPIO1_IO11		0x10b0 /* 开模块盖检测 */
-			MX93_PAD_SAI1_TXD0__GPIO1_IO13		0x10b0 /* PLC模块复位IO */
-			MX93_PAD_SAI1_RXD0__GPIO1_IO14		0x10b0 /* 4G模块复位IO */
-			MX93_PAD_PDM_CLK__GPIO1_IO08		0x10b0 /* 4G模块 power key */
-			MX93_PAD_PDM_BIT_STREAM0__GPIO1_IO09	0x10b0 /* 4G USB 电源控制IO */
-			MX93_PAD_CCM_CLKO2__GPIO3_IO27		0x10b0 /* 锂电池电压检测控制IO */
-			MX93_PAD_CCM_CLKO3__GPIO4_IO28		0x10b0 /* 4000&5000硬件版本IO检测 */
-			
 			/* 通用闲置引脚 -> GPIO */
-			MX93_PAD_GPIO_IO02__GPIO2_IO02		0x10b0 /*开尾盖检测*/
-			MX93_PAD_GPIO_IO03__GPIO2_IO03		0x10b0 /*开关量输入2检测*/
-			/* GPIO2_IO07 用于 pinctrl_batctrl 外置电池供电控制，此处不重复配置 */
-			MX93_PAD_GPIO_IO16__GPIO2_IO16		0x10b0 /*开关量输入1检测*/	
-			MX93_PAD_GPIO_IO17__GPIO2_IO17		0x10b0 /*SIM卡切换IO*/	
-			MX93_PAD_GPIO_IO18__GPIO2_IO18 		0x10b0 /*4G模块 power ctrl*/	
-			MX93_PAD_GPIO_IO19__GPIO2_IO19		0x10b0 /*4G模块插拔检测IO*/	
-			MX93_PAD_GPIO_IO20__GPIO2_IO20		0x10b0 /*PLC模块插拔检测IO*/	
-			MX93_PAD_GPIO_IO21__GPIO2_IO21		0x10b0 /*掉电检测IO*/	
-			MX93_PAD_GPIO_IO22__GPIO2_IO22		0x10b0 /*开背盖检测IO*/	
-			MX93_PAD_GPIO_IO23__GPIO2_IO23		0x10b0 /*外置电池充电使能IO*/	
-			/* GPIO_IO24 用于 TPM3_CH3 红外发射，GPIO_IO25 用于 TPM4_CH3 蜂鸣器，不可用于 GPIO */
-			MX93_PAD_GPIO_IO26__GPIO2_IO26		0x10b0 /*校表485切换IO*/	
-			MX93_PAD_GPIO_IO28__GPIO2_IO28		0x10b0 /*继电器OFF*/	
-			MX93_PAD_GPIO_IO29__GPIO2_IO29		0x10b0 /*继电器ON*/	
-			MX93_PAD_ENET2_MDC__GPIO4_IO14		0x10b0 /* PLC模块电源控制IO 复用为 GPIO4_IO14 */
-			MX93_PAD_ENET2_RD2__GPIO4_IO26		0x10b0 /* 开关量输入3 复用为 GPIO4_IO26 */
-			MX93_PAD_SD2_CD_B__GPIO3_IO00		0x10b0 /* BT_EN 蓝牙使能脚 */
-			MX93_PAD_SD3_DATA3__GPIO3_IO25		0x10b0 /* 非保持RELAY_1控制IO 复用为 GPIO3_IO25 */
+			MX93_PAD_GPIO_IO02__GPIO2_IO02		0x31e /*开尾盖检测*/
+			MX93_PAD_GPIO_IO03__GPIO2_IO03		0x31e /*开关量输入2检测*/
+			MX93_PAD_GPIO_IO16__GPIO2_IO16		0x31e /*开关量输入1检测*/	
+			MX93_PAD_GPIO_IO17__GPIO2_IO17		0x31e /*SIM卡切换IO*/	
+			MX93_PAD_GPIO_IO18__GPIO2_IO18 		0x31e /*4G模块 power ctrl*/	
+			MX93_PAD_GPIO_IO19__GPIO2_IO19		0x31e /*4G模块插拔检测IO*/	
+			MX93_PAD_GPIO_IO20__GPIO2_IO20		0x31e /*PLC模块插拔检测IO*/	
+			MX93_PAD_GPIO_IO21__GPIO2_IO21		0x31e /*掉电检测IO*/	
+			MX93_PAD_GPIO_IO22__GPIO2_IO22		0x31e /*开背盖检测IO*/	
+			MX93_PAD_GPIO_IO23__GPIO2_IO23		0x31e /*外置电池充电使能IO*/	
+			MX93_PAD_GPIO_IO26__GPIO2_IO26		0x31e /*校表485切换IO*/	
+			MX93_PAD_GPIO_IO28__GPIO2_IO28		0x31e /*继电器OFF*/	
+			MX93_PAD_GPIO_IO29__GPIO2_IO29		0x31e /*继电器ON*/	
+		>;
+	};
+
+	pinctrl_gpio4: gpio4grp {
+		fsl,pins = <
+			MX93_PAD_CCM_CLKO3__GPIO4_IO28		0x31e /* 4000&5000硬件版本IO检测 */
+			MX93_PAD_ENET2_MDC__GPIO4_IO14		0x31e /* PLC模块电源控制IO 复用为 GPIO4_IO14 */
+			MX93_PAD_ENET2_RD2__GPIO4_IO26		0x31e /* 开关量输入3 复用为 GPIO4_IO26 */
 		>;
 	};
 
 	pinctrl_led: ledgrp {
 		fsl,pins = <
-			MX93_PAD_ENET1_TXC__GPIO4_IO07		0x10b0 /* 运行指示灯 复用为 GPIO4_IO07 */
-			MX93_PAD_ENET1_RD3__GPIO4_IO13		0x10b0 /* 告警指示灯 复用为 GPIO4_IO13 */
-	
+			MX93_PAD_ENET1_TXC__GPIO4_IO07		0x31e /* 运行指示灯 复用为 GPIO4_IO07 */
+			MX93_PAD_ENET1_RD3__GPIO4_IO13		0x31e /* 告警指示灯 复用为 GPIO4_IO13 */
+
 		>;
 	};
 
 	pinctrl_batctrl: batctrlsgrp {
 		fsl,pins = <
-			MX93_PAD_GPIO_IO07__GPIO2_IO07		0x10b0
+			MX93_PAD_GPIO_IO07__GPIO2_IO07		0x31e
 		>;
 	};
 
@@ -718,36 +733,36 @@
 	pinctrl_gpio_keys: gpio-keys-grp {
 	fsl,pins = <
 		/* GPIO4_15 -> 下按键 */
-		MX93_PAD_ENET2_MDIO__GPIO4_IO15		0x10b
+		MX93_PAD_ENET2_MDIO__GPIO4_IO15		0x31e
 		/* GPIO4_27 -> 上按键 */
-		MX93_PAD_ENET2_RD3__GPIO4_IO27		0x10b
+		MX93_PAD_ENET2_RD3__GPIO4_IO27		0x31e
 		/* GPIO4_21 -> 左按键 */
-		MX93_PAD_ENET2_TXC__GPIO4_IO21		0x10b
+		MX93_PAD_ENET2_TXC__GPIO4_IO21		0x31e
 		/* GPIO4_2  -> 确认按键 */
-		MX93_PAD_ENET1_TD3__GPIO4_IO02			0x10b
+		MX93_PAD_ENET1_TD3__GPIO4_IO02			0x31e
 		/* GPIO2_6  -> 右按键 */
-		MX93_PAD_GPIO_IO06__GPIO2_IO06				0x10b
+		MX93_PAD_GPIO_IO06__GPIO2_IO06				0x31e
 		/* GPIO4_16 -> 取消按键 */
-		MX93_PAD_ENET2_TD3__GPIO4_IO16 			0x10b	
+		MX93_PAD_ENET2_TD3__GPIO4_IO16 			0x31e	
 		>;	
 	};
 	pinctrl_lcd_drv: lcd_drvgrp {
 		fsl,pins = <
-			MX93_PAD_SD3_DATA2__GPIO3_IO24 0x10b0 		/* LCD-RES  C45 SD3_DATA2 */
-			MX93_PAD_PDM_BIT_STREAM1__GPIO1_IO10 0x10b0 /* BLIGHT  背光GPIO */
-			MX93_PAD_SD3_CLK__GPIO3_IO20 0x10b0 		/* LCD-A0   C43 SD3_CLK */
-			MX93_PAD_SD3_CMD__GPIO3_IO21 0x10b0 		/* LCD-WR   C47 SD3_CMD */
-			MX93_PAD_SD3_DATA0__GPIO3_IO22 0x10b0 		/* LCD-RD   C48 SD3_DATA0 */
-			MX93_PAD_SD3_DATA1__GPIO3_IO23 0x10b0 		/* LCD-CS   C44 SD3_DATA1 */
+			MX93_PAD_SD3_DATA2__GPIO3_IO24 0x31e 		/* LCD-RES  C45 SD3_DATA2 */
+			MX93_PAD_PDM_BIT_STREAM1__GPIO1_IO10 0x31e /* BLIGHT  背光GPIO */
+			MX93_PAD_SD3_CLK__GPIO3_IO20 0x31e 		/* LCD-A0   C43 SD3_CLK */
+			MX93_PAD_SD3_CMD__GPIO3_IO21 0x31e 		/* LCD-WR   C47 SD3_CMD */
+			MX93_PAD_SD3_DATA0__GPIO3_IO22 0x31e 		/* LCD-RD   C48 SD3_DATA0 */
+			MX93_PAD_SD3_DATA1__GPIO3_IO23 0x31e 		/* LCD-CS   C44 SD3_DATA1 */
 
-			MX93_PAD_ENET2_RXC__GPIO4_IO23 0x10b0 		/* LCD-D7   C46 SD3_DATA3 */
-			MX93_PAD_ENET2_TD2__GPIO4_IO17 0x10b0 		/* LCD-D6   B37 CLK001 */
-			MX93_PAD_ENET2_TX_CTL__GPIO4_IO20 0x10b0 	/* LCD-D5   B38 CLK002 */
-			MX93_PAD_ENET2_TD1__GPIO4_IO18 0x10b0		/* LCD-D4   B16 ENET2_TD1 */
-			MX93_PAD_ENET2_TD0__GPIO4_IO19 0x10b0		/* LCD-D3   B17 ENET2_TD0 */
-			MX93_PAD_ENET2_RX_CTL__GPIO4_IO22 0x10b0		/* LCD-D2   B10 ENET2_RX_CTL */
-			MX93_PAD_ENET2_RD1__GPIO4_IO25 0x10b0		/* LCD-D1   B8  ENET2_RD1 */
-			MX93_PAD_ENET2_RD0__GPIO4_IO24 0x10b0		/* LCD-D0   C24 GPIO_IO20 */
+			MX93_PAD_ENET2_RXC__GPIO4_IO23 0x31e 		/* LCD-D7   C46 SD3_DATA3 */
+			MX93_PAD_ENET2_TD2__GPIO4_IO17 0x31e 		/* LCD-D6   B37 CLK001 */
+			MX93_PAD_ENET2_TX_CTL__GPIO4_IO20 0x31e 	/* LCD-D5   B38 CLK002 */
+			MX93_PAD_ENET2_TD1__GPIO4_IO18 0x31e		/* LCD-D4   B16 ENET2_TD1 */
+			MX93_PAD_ENET2_TD0__GPIO4_IO19 0x31e		/* LCD-D3   B17 ENET2_TD0 */
+			MX93_PAD_ENET2_RX_CTL__GPIO4_IO22 0x31e		/* LCD-D2   B10 ENET2_RX_CTL */
+			MX93_PAD_ENET2_RD1__GPIO4_IO25 0x31e		/* LCD-D1   B8  ENET2_RD1 */
+			MX93_PAD_ENET2_RD0__GPIO4_IO24 0x31e		/* LCD-D0   C24 GPIO_IO20 */
 			
 		>;
 	};
