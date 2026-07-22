@@ -142,13 +142,6 @@
 		status = "okay";
 	};
 
-	drv_allgpio {
-		compatible = "gpios_drv";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_all_gpio>;
-		status = "okay";
-	};
-
 	/* 
 	PWM 蜂鸣器：4kHz 方波 
 	echo 127 > /sys/class/leds/beep/brightness  # 开（50%占空比）
@@ -442,7 +435,9 @@
 
 &iomuxc {
 	status = "okay";
-
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_all_gpio>;
+	
 	pinctrl_uart1: uart1grp {
 		fsl,pins = <
 			MX93_PAD_UART1_RXD__LPUART1_RX			0x31e
