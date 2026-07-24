@@ -44,6 +44,7 @@
 		compatible = "gpio-keys";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_keys>;
+		autorepeat;
 		status = "okay";
 
 		/* 下按键 - GPIO4_IO15 */
