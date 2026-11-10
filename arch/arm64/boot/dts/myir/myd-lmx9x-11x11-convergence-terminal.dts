@@ -460,13 +460,11 @@
 	};
 
 
-	/* PLC 模块 */
-	pinctrl_uart6: uart6grp {
-		fsl,pins = <
-			MX93_PAD_GPIO_IO04__LPUART6_TX             0x0000057E
-			MX93_PAD_GPIO_IO05__LPUART6_RX             0x0000057E
-		>;
-	};
+	/*
+	 * v1 的 PLC 串口 lpuart6 在 v2 已删除：GPIO_IO04/IO05（GPIO2_IO04/05）改为
+	 * 运行/告警指示灯，见 pinctrl_led。这里不再定义 uart6 的 pinmux，避免将来
+	 * 误使能 lpuart6 时把 LED 引脚抢走。
+	 */
 
 	/* 协处理器 */
 	pinctrl_uart5: uart5grp {
