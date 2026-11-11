@@ -297,11 +297,58 @@
 
 &lpi2c2 {
 	status = "disabled";
+	/*
+	 * v1 底板：lpi2c2 = PMIC(pca9451a@25) + eeprom(24c32@50) +
+	 *           PTN5150 Type-C CC 控制器(typec@3d) + sgtl5000(audio@0a)
+	 * v2 底板：I2C2 的两个 pad 改为 GPIO1_02/GPIO1_03
+	 * （以太网模块5V控制 / 4G模块电源控制），native I2C2 物理上已不存在。
+	 * 因此 v2 不能把 lpi2c2 重新 enable：会和上面两个 5V 控制脚抢同一个 pad。
+	 */
+};
+
+/*
+ * ===================== U 盘口 Type-C CC 控制器（v2 实测用） =====================
+ *
+ * v1 的 typec@3d 挂在 lpi2c2 上，其 INT 用 pad_GPIO_IO29(GPIO2_IO29)，
+ * 由 CC 控制器驱动 U 盘口的 5V VBUS。v2 底板上：
+ *   - I2C2_SCL/SDA  pad 已改成 GPIO1_02 / GPIO1_03（以太网5V、4G电源）
+ *   - pad_GPIO_IO29 已改成 “继电器ON”
+ * 两条信号都没了，所以“把节点挂回 lpi2c2”在 v2 上不可行。
+ *
+ * 这里把节点挂到 v2 唯一在用的 I2C 总线 lpi2c1（i2c@44340000，alias i2c0，
+ * 用户态是 /dev/i2c-0；3.3V 分支，RTC 同总线），
+ * 不带 pinctrl、不带中断，用于实测确认内核驱动路径与板上是否仍有该芯片。
+ * 预期 dmesg（证明节点已被驱动接管、但 CC 控制器的 INT 已不存在）：
+ *   ptn5150 0-003d: No VBUS GPIO, ignoring VBUS control
+ *   ptn5150 0-003d: error -ENOENT: failed to get INT GPIO
+ *
+ * 回退：把下面的 status 改成 "disabled" 即可（不影响任何其它功能）。
+ * 结论记录见 docs/dtb-v1-v2-transition.md §8.5。
+ */
+&lpi2c1 {
+	typec@3d {
+		compatible = "nxp,ptn5150";
+		reg = <0x3d>;
+		status = "okay";
+		/*
+		 * 硬件确认 PTN5150 的 INT 仍连到某个空闲 GPIO 后，在此打开
+		 * （驱动要求 interrupts 或 int-gpios 至少一个，否则 probe 返回 -ENOENT）：
+		 * int-gpios = <&gpio2 NN GPIO_ACTIVE_LOW>;
+		 *
+		 * 若 5V 由 PTN5150 的 VBUS_EN 控制负载开关，且该 EN 可单独由 SoC GPIO 驱动：
+		 * vbus-gpios = <&gpio? NN GPIO_ACTIVE_HIGH>;
+		 */
+	};
 };
 
 /* USB OTG1 连接到 u盘接口，固定为 Host 模式 */
 &usbotg1 {
 	dr_mode = "host";
+	/*
+	 * 刻意不加 usb-role-switch / extcon：
+	 * host-only 时端口供电由 HCD 直接置 PORTSC1.PP，不需要 CC 控制器参与角色切换。
+	 * （v1 的 extcon=<&extcon_usbotg1> 是 otg 双角色方案，v2 已废弃。）
+	 */
 	hnp-disable;
 	srp-disable;
 	adp-disable;
@@ -317,6 +364,37 @@
 	disable-over-current;
 	status = "okay";
 };
+
+/*
+ * ==================== U 盘口 VBUS(5V) 软件开关接入点（模板） ====================
+ *
+ * chipidea host 模式在 HCD 启动时会通过 phy 的 vbus regulator 打开端口电源；
+ * 现在 usbphynop1 拿到的是 dummy regulator（dmesg:
+ *   usb_phy_generic usbphynop1: dummy supplies not allowed for exclusive requests (id=vbus)
+ * ），即软件完全没有参与 VBUS 上电 —— 端口 5V 完全由板级硬件决定。
+ *
+ * 一旦硬件确认 U 盘口的 5V 由某根 SoC GPIO 使能的负载开关控制，把下面这段
+ * 取消注释并填上 GPIO 号，内核就会在 host 端口使能时真正打开 VBUS：
+ *
+ * reg_usb1_vbus: regulator-usb1-vbus {
+ *	compatible = "regulator-fixed";
+ *	regulator-name = "usb1_vbus";
+ *	regulator-min-microvolt = <5000000>;
+ *	regulator-max-microvolt = <5000000>;
+ *	gpio = <&gpio4 NN GPIO_ACTIVE_HIGH>;	// TODO: 待硬件确认
+ *	enable-active-high;
+ *	regulator-always-on;	// host-only 口常供电，避免依赖 HCD 上电时序
+ * };
+ *
+ * &usbphynop1 {
+ *	vbus-supply = <&reg_usb1_vbus>;
+ * };
+ *
+ * 注意：只有“5V 的使能真的接到 SoC GPIO”时这一招才有效。
+ * 若 5V 使能仍由已删除的 PTN5150(VBUS_EN) 或纯硬件电路控制，则必须改硬件。
+ * 详见 docs/dtb-v1-v2-transition.md §8.4 / §8.5。
+ */
+
 
 /*  SD/MMC/eMMC */
 &usdhc1 {
@@ -715,8 +793,18 @@
 		MX93_PAD_ENET2_RD3__GPIO4_IO27		0x10b
 		/* GPIO4_21 -> 左按键 */
 		MX93_PAD_ENET2_TXC__GPIO4_IO21		0x10b
-		/* GPIO1_11 -> 确认按键 */
-		MX93_PAD_SAI1_TXFS__GPIO1_IO11			0x10b
+		/*
+		 * GPIO1_11 -> 确认按键
+		 *
+		 * 该脚在模组侧带有一个 BOOT 启动用的下拉电阻（复位阶段靠它采样启动
+		 * 介质），复位采样结束后必须由软件把它切成上拉，否则它会一直停在
+		 * 低电平；gpio-keys 里是 GPIO_ACTIVE_LOW（低=按下），表现为“没人碰
+		 * 按键却不停地刷 KEY_ENTER，value=2（自动重复）”。
+		 *
+		 * 本组其它 5 个按键用 0x10b（不带内部上拉，靠板上的外部上拉），
+		 * 这一根必须显式开内部上拉，故用本板其它输入脚在用的 0x31e。
+		 */
+		MX93_PAD_SAI1_TXFS__GPIO1_IO11			0x31e
 		/* GPIO2_6  -> 右按键 */
 		MX93_PAD_GPIO_IO06__GPIO2_IO06				0x10b
 		/* GPIO4_16 -> 取消按键 */
