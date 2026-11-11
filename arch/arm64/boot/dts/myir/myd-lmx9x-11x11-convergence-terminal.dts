@@ -344,17 +344,7 @@
 /* USB OTG1 连接到 u盘接口，固定为 Host 模式 */
 &usbotg1 {
 	dr_mode = "host";
-	/*
-	 * 刻意不加 usb-role-switch / extcon：
-	 * host-only 时端口供电由 HCD 直接置 PORTSC1.PP，不需要 CC 控制器参与角色切换。
-	 * （v1 的 extcon=<&extcon_usbotg1> 是 otg 双角色方案，v2 已废弃。）
-	 */
-	hnp-disable;
-	srp-disable;
-	adp-disable;
 	disable-over-current;
-	samsung,picophy-pre-emp-curr-control = <3>;
-	samsung,picophy-dc-vol-level-adjust = <7>;
 	status = "okay";
 };
 
@@ -364,36 +354,6 @@
 	disable-over-current;
 	status = "okay";
 };
-
-/*
- * ==================== U 盘口 VBUS(5V) 软件开关接入点（模板） ====================
- *
- * chipidea host 模式在 HCD 启动时会通过 phy 的 vbus regulator 打开端口电源；
- * 现在 usbphynop1 拿到的是 dummy regulator（dmesg:
- *   usb_phy_generic usbphynop1: dummy supplies not allowed for exclusive requests (id=vbus)
- * ），即软件完全没有参与 VBUS 上电 —— 端口 5V 完全由板级硬件决定。
- *
- * 一旦硬件确认 U 盘口的 5V 由某根 SoC GPIO 使能的负载开关控制，把下面这段
- * 取消注释并填上 GPIO 号，内核就会在 host 端口使能时真正打开 VBUS：
- *
- * reg_usb1_vbus: regulator-usb1-vbus {
- *	compatible = "regulator-fixed";
- *	regulator-name = "usb1_vbus";
- *	regulator-min-microvolt = <5000000>;
- *	regulator-max-microvolt = <5000000>;
- *	gpio = <&gpio4 NN GPIO_ACTIVE_HIGH>;	// TODO: 待硬件确认
- *	enable-active-high;
- *	regulator-always-on;	// host-only 口常供电，避免依赖 HCD 上电时序
- * };
- *
- * &usbphynop1 {
- *	vbus-supply = <&reg_usb1_vbus>;
- * };
- *
- * 注意：只有“5V 的使能真的接到 SoC GPIO”时这一招才有效。
- * 若 5V 使能仍由已删除的 PTN5150(VBUS_EN) 或纯硬件电路控制，则必须改硬件。
- * 详见 docs/dtb-v1-v2-transition.md §8.4 / §8.5。
- */
 
 
 /*  SD/MMC/eMMC */
